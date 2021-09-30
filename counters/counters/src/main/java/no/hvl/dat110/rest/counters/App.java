@@ -1,11 +1,8 @@
 package no.hvl.dat110.rest.counters;
 
-import static spark.Spark.after;
-import static spark.Spark.get;
-import static spark.Spark.port;
-import static spark.Spark.put;
-
 import com.google.gson.Gson;
+
+import static spark.Spark.*;
 
 /**
  * Hello world!
@@ -13,7 +10,7 @@ import com.google.gson.Gson;
  */
 public class App {
 	
-	static Counters counters = null;
+	static Todolist todolist;
 	
 	public static void main(String[] args) {
 
@@ -23,31 +20,35 @@ public class App {
 			port(8080);
 		}
 
-		counters = new Counters();
+		todolist = new Todolist();
 		
 		after((req, res) -> {
   		  res.type("application/json");
   		});
 		
-		get("/hello", (req, res) -> "Hello World!");
-		
-        get("/counters", (req, res) -> counters.toJson());
- 
-        get("/counters/red", (req, res) -> counters.getRed());
+        get("/todolist", (req, res) -> todolist.toJson());
 
-        get("/counters/green", (req, res) -> counters.getGreen());
+		post("/todolist", (req, res) -> {
+			Gson gson = new Gson();
+			Todo todo = gson.fromJson(req.body(), Todo.class);
+			todolist.addTodo(todo);
+			return todo.toJson();
+		});
 
-        // TODO: put for green/red and in JSON
-        // variant that returns link/references to red and green counter
-        put("/counters", (req,res) -> {
-        
-        	Gson gson = new Gson();
-        	
-        	counters = gson.fromJson(req.body(), Counters.class);
-        
-            return counters.toJson();
-        	
+		// Need an id so that we know which item to update
+        put("/todolist", (req,res) -> {
+			Gson gson = new Gson();
+			Todo todo = gson.fromJson(req.body(), Todo.class);
+			todolist.updateTodo(todo);
+            return todo.toJson();
         });
+
+		delete("/todolist", (req, res) -> {
+			Gson gson = new Gson();
+			Todo todo = gson.fromJson(req.body(), Todo.class);
+			todolist.deleteTodo(todo.getId());
+			return todolist.toJson();
+		});
     }
     
 }
